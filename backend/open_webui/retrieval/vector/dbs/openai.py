@@ -31,3 +31,23 @@ class OpenAIStore(VectorDB):
 
     def delete_collection(self, name: str) -> None:
         pass
+
+    def list_items(self, name: str) -> list[Document]:
+        """
+        Returns all vectors already stored in the OpenAI index
+        under 'name' as Document objects.
+        """
+        resp = openai.Vector.search(
+            index=self.index,
+            vector=[],
+            top_k=0,
+            include_metadata=True
+        )
+        docs: list[Document] = []
+        for item in resp["data"]:
+            docs.append(Document(
+                id=item["id"],
+                text="",
+                metadata=item["metadata"]
+            ))
+        return docs
