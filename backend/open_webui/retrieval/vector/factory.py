@@ -1,6 +1,7 @@
 from open_webui.retrieval.vector.main import VectorDBBase
 from open_webui.retrieval.vector.type import VectorType
 from open_webui.config import VECTOR_DB, ENABLE_QDRANT_MULTITENANCY_MODE
+from open_webui.retrieval.vector.dbs.openai import OpenAIStore
 
 
 class Vector:
@@ -48,6 +49,10 @@ class Vector:
                 from open_webui.retrieval.vector.dbs.chroma import ChromaClient
 
                 return ChromaClient()
+            case VectorType.OPENAI:
+                from open_webui.retrieval.vector.dbs.openai import OpenAIClient
+
+                return OpenAIClient()
             case _:
                 raise ValueError(f"Unsupported vector type: {vector_type}")
 
