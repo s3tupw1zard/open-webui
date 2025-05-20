@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from open_webui.retrieval.vector.main import VectorDBBase, VectorItem, GetResult, SearchResult
 
 
-class OpenAIStore(VectorDBBase):
+class OpenAIClient(VectorDBBase):
     """
     VectorDB driver for OpenAI Vector Store.
     Automatically creates a new Vector Store per knowledge base via OpenAI API.
@@ -199,7 +199,3 @@ class OpenAIStore(VectorDBBase):
             if vid:
                 openai.request(method="DELETE", url=f"/vector_stores/{vid}")
 
-
-class OpenAIClient(OpenAIStore):
-    """Alias for OpenAIStore to match VectorDB client naming conventions."""
-    pass
