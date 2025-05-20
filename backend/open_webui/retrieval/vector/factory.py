@@ -1,7 +1,7 @@
 from open_webui.retrieval.vector.main import VectorDBBase
 from open_webui.retrieval.vector.type import VectorType
 from open_webui.config import VECTOR_DB, ENABLE_QDRANT_MULTITENANCY_MODE
-from open_webui.retrieval.vector.dbs.openai import OpenAIStore
+from open_webui.retrieval.vector.dbs.openai import OpenAIClient
 
 
 class Vector:

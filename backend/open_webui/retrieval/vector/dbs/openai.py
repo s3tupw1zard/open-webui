@@ -118,3 +118,8 @@ class OpenAIStore(VectorDBBase):
                 metadata=hit.get("metadata")
             ))
         return items
+
+
+class OpenAIClient(OpenAIStore):
+    """Alias for OpenAIStore to match VectorDB client naming conventions."""
+    pass
