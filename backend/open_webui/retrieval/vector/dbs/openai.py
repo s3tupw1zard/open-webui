@@ -1,53 +1,64 @@
 import openai
-from typing import Optional, List
-from open_webui.retrieval.vector.base import VectorDB, SearchResult, Document
-from open_webui.env import get_persistent_config
+from typing import List, Optional
+from open_webui.retrieval.vector.main import VectorDBBase, SearchResult, Document
 
-class OpenAIStore(VectorDB):
+class OpenAIClient(VectorDBBase):
     TYPE = "openai"
 
     def __init__(self):
-        key = get_persistent_config("OPENAI_API_KEY")
-        self.index = get_persistent_config("OPENAI_VECTOR_INDEX")
-        openai.api_key = key
+        openai.api_key = self._get_config("OPENAI_API_KEY")
+        self.index = self._get_config("OPENAI_VECTOR_INDEX")
 
     def create_collection(self, name: str) -> None:
-        pass
+        return
 
     def add_items_to_collection(self, name: str, items: List[Document]) -> None:
         for doc in items:
             resp = openai.Embedding.create(
                 model="text-embedding-3-small",
                 input=doc.text,
-                user="open_webui",
+            )
+            vec = resp.data[0].embedding
+            openai.Vector.upsert(
+                index=self.index,
+                vectors=[{
+                    "id": doc.id,
+                    "values": vec,
+                    "metadata": {"kb": name, **doc.metadata},
+                }],
             )
 
     def search(self, name: str, vectors: List[List[float]], limit: int) -> Optional[SearchResult]:
-        resp = openai.Embedding.create(
-            model="text-embedding-3-small",
-            input=[...],
-        )
-        return SearchResult(ids=[...], distances=[...])
-
-    def delete_collection(self, name: str) -> None:
-        pass
-
-    def list_items(self, name: str) -> list[Document]:
-        """
-        Returns all vectors already stored in the OpenAI index
-        under 'name' as Document objects.
-        """
         resp = openai.Vector.search(
             index=self.index,
-            vector=[],
-            top_k=0,
-            include_metadata=True
+            vector=vectors[0],
+            top_k=limit,
+            include=["metadata"]
         )
-        docs: list[Document] = []
+        ids   = [item["id"]       for item in resp["data"]]
+        dists = [item["score"]    for item in resp["data"]]
+        mets  = [item["metadata"] for item in resp["data"]]
+        return SearchResult(ids=ids, distances=dists, metadatas=mets)
+
+    def delete_collection(self, name: str) -> None:
+        openai.Vector.delete(
+            index=self.index,
+            ids=[doc.id for doc in self.list_items(name)]
+        )
+
+    def list_items(self, name: str) -> List[Document]:
+        resp = openai.Vector.search(
+            index=self.index,
+            vector=[0.0]*1536,
+            top_k=1000,
+            include=["metadata"]
+        )
+        docs: List[Document] = []
         for item in resp["data"]:
-            docs.append(Document(
-                id=item["id"],
-                text="",
-                metadata=item["metadata"]
-            ))
+            if item["metadata"].get("kb") == name:
+                docs.append(Document(
+                    id=item["id"],
+                    text="",
+                    metadata=item["metadata"],
+                ))
         return docs
