@@ -1,3 +1,4 @@
+import os
 import openai
 from typing import Any, Dict, List, Optional
 from open_webui.retrieval.vector.main import VectorDBBase, VectorItem, GetResult, SearchResult
@@ -11,9 +12,8 @@ class OpenAIClient(VectorDBBase):
     TYPE = "openai"
 
     def __init__(self):
-        # API-Key & optional API-Base aus Konfiguration laden
-        openai.api_key = self._get_config("OPENAI_API_KEY")
-        base = self._get_config("OPENAI_API_BASE", None)
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        base = os.getenv("OPENAI_API_BASE_URL", None)
         if base:
             openai.api_base = base
         self.index: Optional[str] = None
@@ -42,7 +42,7 @@ class OpenAIClient(VectorDBBase):
 
         texts = [item["text"] for item in items]
         embed_resp = openai.Embedding.create(
-            model=self._get_config("EMBEDDING_MODEL", "text-embedding-3-small"),
+            model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
             input=texts
         )
 
@@ -99,7 +99,8 @@ class OpenAIClient(VectorDBBase):
         # list up to 1000 items
         resp = openai.Vector.search(
             index=self.index,
-            vector=[0.0] * self._get_config("DUMMY_DIM", 1536),
+            dummy_dim=int(os.getenv("DUMMY_DIM", 1536)),
+            vector=[0.0] * dummy_dim,
             top_k=1000,
             include=["metadata"]
         )
@@ -116,7 +117,8 @@ class OpenAIClient(VectorDBBase):
 
         resp = openai.Vector.search(
             index=self.index,
-            vector=[0.0] * self._get_config("DUMMY_DIM", 1536),
+            dummy_dim=int(os.getenv("DUMMY_DIM", 1536)),
+            vector=[0.0] * dummy_dim,
             top_k=1000,
             include=["values", "metadata"]
         )
